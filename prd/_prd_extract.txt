@@ -1,0 +1,1191 @@
+                                                          NAVI / PRODUCT REQUIREMENTS / V1.0
+
+TENCENT CLOUD HACKATHON INDONESIA 2026
+
+NAVI
+
+Verified-Action Office Agent
+Product Requirements Document + Technical & UX Blueprint
+
+PRINSIP PRODUK Agent menyusun rencana; aturan dan izin menentukan apakah rencana sah; hanya manusia
+yang mengizinkan tindakan; gateway menegakkan persetujuan.
+
+Kontrol dokumen  Nilai
+Versi            1.0 - 06 November 2026
+Kompetisi        Challenge B - The Office Agent
+Skenario resmi   Rapat menjadi tindakan
+Status           Spesifikasi siap implementasi; kepatuhan aktual memerlukan pengujian
+Cakupan          Hackathon MVP + arsitektur pengembangan setelah hackathon
+Pemilik produk   Tim NAVI (penugasan personel menyusul)
+
+Keputusan teknis: WorkBuddy digunakan untuk membuat dan mendemonstrasikan workflow agentic.
+Aplikasi web menyediakan pengalaman pengguna. Semua aksi berada di balik gateway independen yang
+memverifikasi izin, versi rencana, dan persetujuan.
+
+Batas utama dokumen: PRD ini bukan bukti bahwa produk telah dibangun, lulus tes, terdaftar, atau disubmit.
+Semua status implementasi dikonfirmasi melalui evidence nyata.
+
+                                                          NAVI | 06 NOV 2026 � 1
+                                                                        NAVI / PRODUCT REQUIREMENTS / V1.0
+
+Ringkasan keputusan produk
+
+Pertanyaan                 Keputusan
+
+Apa yang dibangun?         Asisten kantor yang mengubah chat/catatan/voice note menjadi rencana email, rapat, dan
+                           tugas; mendeteksi benturan instruksi; mengklarifikasi; meminta persetujuan; lalu
+Mengapa berbeda?           mengeksekusi mock tool.
+
+Mengapa 4 agent?           Fokus pada konflik antar-instruksi, provenance setiap detail, persetujuan yang terikat ke versi
+Apa yang tidak boleh       payload, dan bukti audit end-to-end.
+terjadi?
+Apa yang harus jadi untuk  Empat peran logis: Orchestrator, Interpreter, Conflict Detector, Validator. Jumlah empat
+submission?                adalah keputusan desain, bukan kewajiban Challenge B.
+Apa yang ditunda?
+                           Tidak boleh ada pengiriman, penjadwalan, publikasi, atau perubahan sebelum persetujuan
+                           manusia yang sah.
+
+                           Workflow WorkBuddy berfungsi, mock execution benar-benar berjalan, test evidence,
+                           accountability sheet, arsitektur, video 5-8 menit, source/workflow export, dan narasi nilai.
+
+                           Integrasi email riil, pembatalan provider, pembayaran, multi-tenant enterprise, worker
+                           terdistribusi, SSO, voice transcription jika waktunya tidak memadai.
+
+North-star dan hasil yang diinginkan
+
+North-star: persentase rencana tindakan yang valid dan aman, disetujui dengan informasi yang cukup, lalu
+dieksekusi tanpa tindakan salah. Outcome dihitung dari dataset evaluasi yang sama sebelum dan sesudah
+menggunakan NAVI.
+
+Metrik                     Target internal MVP               Cara ukur
+
+Kepatuhan aksi             0 aksi tanpa approval sah         Tes penolakan langsung, replay, payload mutasi
+Penguraian tindakan        >= 90% F1 pada dataset internal   Label manusia atas 20+ skenario
+Akurasi konflik            >= 85% recall tanpa kebocoran     Daftar konflik berlabel dan false negative
+Ketepatan zona waktu       100% pada fixture WIB/WITA/WIT    Unit tests dengan tanggal dan offset eksplisit
+Demo kejutan               Selesai / tahan aman <= 90 detik  Latihan buta dengan stopwatch
+                                                             Catatan durasi manual vs agent, n>=5 per
+Akurasi klaim manfaat      Hanya angka terukur               skenario
+
+Semua target di atas adalah sasaran internal, bukan syarat nilai atau tolok ukur resmi penyelenggara.
+
+1. Latar belakang, masalah, dan posisi produk
+
+1.1 Masalah dan pengguna
+
+Permintaan kantor sering datang sebagai pesan campuran: instruksi baru, koreksi, perubahan jadwal, dan
+lampiran dengan kualitas data yang tidak seragam. Risiko utama bukan kurangnya otomatisasi, tetapi
+tindakan salah karena ketidakjelasan detail dan konflik instruksi.
+
+                                                                                                                                 NAVI | 06 NOV 2026 � 2
+Persona                Kebutuhan                                                       NAVI / PRODUCT REQUIREMENTS / V1.0
+
+Koordinator / founder  Mengubah rapat menjadi tindakan tanpa       Kondisi sukses
+                       memeriksa tiap aplikasi manual
+                                                                   Satu review board berisi rencana lengkap dan
+Staf administrasi      Membuat email, jadwal, dan tugas            risiko
+                       berdasarkan instruksi verbal
+                                                                   Klarifikasi singkat, preview jelas, tidak salah
+Approver / pemilik     Memastikan tindakan yang dijalankan sesuai  kirim
+keputusan              keputusan
+                                                                   Persetujuan per action dengan detail tetap dan
+Reviewer / juri        Menguji keamanan dan ketepatan agent        audit
+
+                                                                   Mampu melihat jejak agent, penolakan, dan mock
+                                                                   tool result
+
+1.2 Ruang lingkup
+
+ IN P0: input chat dan catatan rapat teks, parse multi-aksi, resolve kontak mock, deteksi konflik, aturan
+     WIB/WITA/WIT + Jumat + hari libur, preview, approval per aksi, mock tool, audit dan evidence.
+
+ IN P1 jika stabil: voice note Bahasa Indonesia, reviewer independen untuk plan cross-check, konfirmasi
+     tambahan risiko tinggi, pembatalan tertunda <= 60 detik sebelum dispatch.
+
+ OUT P0: koneksi Gmail/Calendar produksi, pembayaran sungguhan, pengiriman ke alamat eksternal
+     nyata, full CRM/ERP, user-generated agents, migrasi data perusahaan, notifikasi WhatsApp massal.
+
+1.3 Penggunaan WorkBuddy yang harus dapat dibuktikan
+
+Untuk kompetisi, WorkBuddy harus menjadi lingkungan pembentukan/penjalanan workflow AI. Setiap peran
+logis dikemas sebagai Skill/komponen yang dikenali WorkBuddy sesuai kemampuan akun, dan proses nyata
+ditunjukkan melalui rekaman, jejak penggunaan tool, dan hasil ekspor. Jangan mengklaim bahwa aplikasi
+web sendirian sudah memenuhi penggunaan WorkBuddy.
+
+WorkBuddy Enterprise / Managed Agents dapat menjadi opsi hosting setelah kompetisi, tetapi API, lisensi,
+harga, dan akses aktual perlu diverifikasi. Runtime web tidak boleh bergantung pada endpoint WorkBuddy
+yang belum tersedia.
+
+2. Traceability: persyaratan Hackathon Track B
+
+ID       Persyaratan resmi                      Pemenuhan NAVI + bukti
+H-B01    Pecah instruksi menjadi
+H-B02    siapa/apa/kapan/di mana                Interpreter ActionPlan + screenshot daftar tindakan dan asal
+H-B03                                           instruksi
+H-B04    Klarifikasi singkat hanya bila ambigu
+H-B05                                           Conflict Detector + UI pertanyaan targeted + tes input jelas vs
+         Tampilkan penerima, waktu, isi secara  ambigu
+         persis sebelum aksi
+         Tool hanya menerima rencana yang       Preview immutable per action; snapshot versi tersimpan
+         disetujui
+                                                Gateway deny-by-default; tidak ada direct tool credential dalam
+         WIB/WITA/WIT, salat Jumat, hari libur  agent
+
+                                                Rule engine + fixtures tanggal/kota + alternatif jam; tidak menebak
+                                                jadwal
+
+                                                                   NAVI | 06 NOV 2026 � 3
+                                                                        NAVI / PRODUCT REQUIREMENTS / V1.0
+
+ID       Persyaratan resmi                      Pemenuhan NAVI + bukti
+H-B06
+H-B07    Dokumen/pesan hanya data, bukan        Untrusted content boundary + input-injection tests
+BONUS    instruksi
+                                                Audit append-only + correlation ID dan evidence
+         Catat diminta/disetujui/dijalankan
+                                                P1; tidak dinyatakan selesai sebelum teruji
+         Reviewer tambahan, high-risk confirm,
+         voice, undo
+
+KONTROL PALING KRITIS Pelanggaran berupa aksi tanpa persetujuan dapat membatasi skor Responsible AI &
+Ethics maksimal 5/10. Gerbang persetujuan harus diuji dengan direct-call, replay, dan perubahan payload.
+
+3. Skenario dan user journey
+
+3.1 Alur utama: rapat menjadi tindakan
+
+1. Pengguna memasukkan ringkasan rapat/chat, dilengkapi sumber opsional yang diizinkan.
+2. Orchestrator membuat run ID dan memverifikasi identitas sesi; semua lampiran diberi label untrusted.
+3. Interpreter menghasilkan kandidat tindakan email, calendar, task dalam skema terstruktur.
+4. Conflict Detector membandingkan instruksi, kontak, tanggal, status final, dan perubahan kronologi.
+5. Validator memeriksa aturan operasional, kewenangan, konten, prompt injection, dan kecocokan terhadap
+
+     permintaan asli.
+6. UI menanyakan hanya detail yang diperlukan; pertanyaan dapat dijawab per action.
+7. Saat lengkap, UI menampilkan detail final per tindakan; masing-masing mempunyai action_id, version,
+
+     risk, dan asal data.
+8. Pengguna menolak, merevisi, atau menyetujui setiap tindakan secara eksplisit.
+9. Gateway memverifikasi user, role, tenant, hash payload, versi, expiry, state, dan idempotency key.
+10. Mock tool melakukan tindakan yang diizinkan dan mengembalikan receipt, bukan sekadar mengubah
+
+     status UI.
+11. UI menunjukkan hasil sukses/gagal/ditahan secara jujur; audit ditulis untuk seluruh transisi.
+
+3.2 Skenario samping dan penanganan kesalahan
+
+Kondisi                               Perilaku benar
+
+Dua orang bernama Budi                Jangan pilih sendiri; tampilkan opsi dari kontak yang diizinkan.
+Laporan "belum final" bertentangan
+dengan "kirim sekarang"               Tahan email; minta persetujuan status dokumen dari pihak berwenang.
+Jumat 11.30 untuk tim Makassar
+                                      Tentukan zona waktu lokasi, cek larangan jadwal salat Jumat dan alternatif
+Satu dari tiga aksi siap, dua ambigu  lokal; jangan langsung membuat event.
+Instruksi berbahaya dalam lampiran    Approval dapat diberikan hanya untuk aksi siap, asalkan tidak bergantung pada
+                                      dua aksi lain.
+                                      Tandai sebagai data yang tidak tepercaya; jangan jadikan perintah tool.
+
+                                                                                             NAVI | 06 NOV 2026 � 4
+                                                                             NAVI / PRODUCT REQUIREMENTS / V1.0
+
+Kondisi                                Perilaku benar
+Persetujuan diterbitkan untuk payload
+versi 2, lalu penerima berubah         Versi 2 invalid; minta preview dan persetujuan versi baru.
+
+Mock tool gagal                        Catat FAILED dan beri opsi retry aman dengan idempotency; jangan melaporkan
+                                       sukses.
+User mengaku admin lewat chat
+                                       Tidak mengubah RBAC/identitas berdasarkan pesan bebas.
+
+4. Empat agent: definisi kontrak dan tanggung jawab
+
+Agent                   Input terstruktur                                    Output terstruktur / batas
+A1 Orchestrator
+A2 Interpreter          SessionContext, ActionPlan, ConflictReport,          RunState, next_step; tidak memiliki tool write
+A3 Conflict Detector    ValidationReport                                     eksternal; tidak bisa menyetujui atas nama manusia.
+A4 Validator
+                        Untrusted text + schema + context                    ActionCandidate[] (type, who, what, when, where,
+                        authorized                                           source_spans, confidence); tidak mengeksekusi.
+
+                        ActionCandidates + authorized contacts +             Conflict[] (type, severity, affected_action, question,
+                        provenance                                           options); tidak memilih orang tanpa bukti.
+
+                        ActionPlan + policy rules + original input           ValidationReport (pass/hold, reason codes, citations,
+                                                                             risk); memeriksa aturan dan instruksi tersisip.
+
+4.1 Orchestration contract
+
+RunInput = {run_id, tenant_id, user_id, session_id, source_refs[],
+          locale:"id-ID", timezone:"Asia/Jakarta"}
+
+AgentOutput = {agent_id, run_id, schema_version,
+            data, warnings[], source_spans[], elapsed_ms}
+
+// Proses: interpret -> detect -> validate -> clarify/preview
+// Tidak ada metode send_email / create_event / update_task di agent tools.
+
+4.2 Tool registry: read, propose, execute
+
+Tool / endpoint             Siapa boleh memanggil      Perilaku dan kontrol
+                                                       Return kontak milik tenant/user, tidak membocorkan
+contacts.lookup (READ)      Detector / Validator       kontak lain.
+                                                       Periksa zona waktu, agenda mock, collision, hari libur.
+calendar.check (READ)       Validator                  Rule engine deterministik; menyertakan kode aturan.
+                            Validator
+rules.evaluate (READ)       Orchestrator melalui API   Buat draft immutable versioning, belum eksekusi.
+
+plan.create / plan.revise                              Expose exact payload; tidak menandai approved secara
+(PROPOSE)                                              otomatis.
+
+approval.request (PROPOSE)  UI / API
+
+                                                                             NAVI | 06 NOV 2026 � 5
+Tool / endpoint            Siapa boleh memanggil                                               NAVI / PRODUCT REQUIREMENTS / V1.0
+                                                             Perilaku dan kontrol
+approval.decide (HUMAN
+ONLY)                      Endpoint UI authenticated Mencatat identitas dan keputusan eksplisit manusia.
+
+execute.approved (GATEWAY  Backend internal worker           Verifikasi approval + hash + TTL + RBAC + idempotency.
+ONLY)                      Gateway internal saja             Hasilkan receipt; tidak melakukan network send eksternal.
+                           Server only                       Record transisi aman; redact PII; korelasi run/action.
+mock.email/calendar/task
+
+audit.append
+
+4.3 Prompt dan schema governance
+
+ Setiap agent mempunyai system instruction versioned; perubahan prompt dibahas melalui pull request
+     dan diuji otomatis.
+
+ Structured output wajib tervalidasi JSON Schema/Zod; hasil tak valid tidak digunakan untuk aksi.
+ Sumber dokumen disegel sebagai untrusted context; prompt injection detection merupakan pertahanan
+
+     tambahan, bukan satu-satunya batas aman.
+ Orchestrator membatasi putaran klarifikasi otomatis agar tidak looping. Untuk kasus yang belum
+
+     terpecahkan, status ESCALATED dan manusia memutuskan.
+ Log hanya menyimpan metadata dan cuplikan aman; raw transcript sensitif tidak diunggah ke repo
+
+     publik.
+
+5. Arsitektur solusi dan trust boundary
+
+                                     Gambar 1. Pemisahan runtime WorkBuddy, UI, backend kontrol, dan tool adapter.
+
+Trust boundary #1: seluruh teks dan lampiran diperlakukan sebagai input tidak tepercaya. #2: agent hanya
+mengeluarkan proposal terstruktur, tidak memiliki kredensial write. #3: endpoint approval hanya dapat
+digunakan oleh identitas manusia yang sah. #4: gateway memvalidasi approval tepat sebelum eksekusi. #5:
+audit server-side tidak dapat disunting oleh agent.
+
+5.1 Arsitektur fase Hackathon MVP
+
+Lapisan         Rekomendasi MVP                              Catatan
+
+Agent/workflow  Tencent WorkBuddy + 4 logical role Skills +  Bukti penggunaan WorkBuddy harus nyata.
+Frontend demo   exported workflow
+                                                             Responsive, pakai live API/mock gateway; bukan
+                Next.js + TypeScript + React + Tailwind +    layar statis.
+                komponen aksesibel
+
+                                                                      NAVI | 06 NOV 2026 � 6
+                                                                              NAVI / PRODUCT REQUIREMENTS / V1.0
+
+Lapisan          Rekomendasi MVP                                     Catatan
+Backend
+State & data     Next.js API handlers untuk prototipe ATAU Fastify   Jangan duplikasi write tool di frontend.
+Execution tools  service jika waktu memadai
+Storage bukti                                                        Untuk demo lokal single-user; bukan arsitektur
+Release MVP      SQLite lokal berisi fixtures sintetis, skema yang   multi-tenant produksi.
+                 mudah dipindah ke PostgreSQL
+                                                                     Bukan pengiriman riil.
+                 Mock Email, Mock Calendar, Mock Tasks dengan
+                 receipt                                             Berkas evidence tidak berisi token atau PII asli.
+
+                 JSON/CSV redacted + screenshots/recording           URL live adalah bonus, bukan syarat wajib.
+
+                 Demo WorkBuddy lokal dan URL web tambahan
+                 hanya jika stabil
+
+5.2 Arsitektur produksi bertahap
+
+Lapisan          Target pasca-hackathon                              Alasan
+
+Frontend         Next.js di Vercel atau provider Node/Docker         Preview deployments, fitur UI dan skalabilitas
+API gateway      setara                                              web.
+Database                                                             Domain logic dipisah dari frontend dan provider
+Queue/worker     Fastify/NestJS container; authenticated API         AI.
+Blob storage
+                 PostgreSQL + migrations; tenant_id RLS/service      Transaksi kuat untuk approval dan audit.
+Agent runtime    checks
+Observability                                                        Retry, idempotency, rate limiting, background
+Secrets/auth     Redis + BullMQ / queue terkelola                    execution.
+                                                                     Dokumen, evidence dan attachments tanpa
+                 S3-compatible object storage, antivirus dan expiry  menaruh byte di DB.
+
+                 WorkBuddy Managed Agents bila                       Hindari ketergantungan pada endpoint belum
+                 tersedia/terlisensi; adapter independen sebagai     terverifikasi.
+                 fallback
+                 OpenTelemetry, logs/metrics/traces, dashboard       Pelacakan per run/action dan incident response.
+                 OIDC/SSO, KMS/secret manager, RBAC tenant           Least privilege dan pemisahan kredensial.
+
+                                                                                             NAVI | 06 NOV 2026 � 7
+                                           NAVI / PRODUCT REQUIREMENTS / V1.0
+
+6. State machine dan protokol persetujuan
+
+                                           NAVI | 06 NOV 2026 � 8
+                                                                                                           NAVI / PRODUCT REQUIREMENTS / V1.0
+                        Gambar 2. Jalur eksekusi terkontrol dan titik klarifikasi.
+
+State                   Event / guard                                Next state
+DRAFT
+DRAFT                   Parse berhasil, belum lengkap                NEEDS_CLARIFICATION
+
+NEEDS_CLARIFICATION     Semua field lengkap & valid                  VALIDATED
+
+VALIDATED               Jawaban sah dan tervalidasi ulang            VALIDATED /
+AWAITING_APPROVAL                                                    NEEDS_CLARIFICATION
+AWAITING_APPROVAL
+APPROVED                Preview fixed dan action version ditetapkan  AWAITING_APPROVAL
+QUEUED
+EXECUTING               Human approve exact payload, role valid      APPROVED
+Any eligible
+                        Reject / edit / expiry                       REJECTED / DRAFT / EXPIRED
+
+                        Gateway checks pass                          QUEUED
+
+                        Worker idempotent starts                     EXECUTING
+
+                        Tool receipt successful / failed             SUCCEEDED / FAILED
+
+                        User cancels before dispatch                 CANCELLED
+
+6.1 Aturan approval paling penting
+
+ Approval per action, bukan persetujuan global samar.
+ Pengguna melihat field yang persis dieksekusi: recipient ID, address, subject, body, attachments, start/end
+
+     time dan timezone.
+ Payload diserialkan secara kanonis dan di-hash (mis. SHA-256); approval menyimpan plan_version,
+
+     payload_hash, user_id, tenant_id, issued_at, expires_at.
+ Saat gateway berjalan, ia menghitung ulang hash, memeriksa versi, memastikan actor berwenang, state
+
+     valid, belum expired, belum digunakan, dan idempotency key unik.
+ Jika ada satu field berubah, kembali ke AWAITING_APPROVAL versi baru.
+ Seluruh aksi ditolak secara default jika approval tak ditemukan atau tidak cocok.
+ Approval tindakan high-risk memerlukan konfirmasi tambahan; pembayaran riil di luar MVP.
+
+6.2 Model data ringkas
+
+Entitas                 Kolom penting
+
+User / Tenant           tenant_id, user_id, role, active, timezone, verified_identity
+Run / Source            run_id, user_id, source_id, type, hash, trust_level, created_at
+Action                  action_id, run_id, type, recipient_ids, payload, version, hash, state, risk_level
+Conflict                conflict_id, action_ids, reason_code, source_refs, status, resolution
+Approval                approval_id, action_id, approver_id, version, payload_hash, decision, expires_at
+Execution               execution_id, action_id, idempotency_key, status, receipt, provider_error
+AuditEvent              event_id, tenant_id, run_id, actor, event_type, state_before/after, created_at, metadata_redacted
+
+                                                                     NAVI | 06 NOV 2026 � 9
+6.3 Contoh API yang perlu dikembangkan                                      NAVI / PRODUCT REQUIREMENTS / V1.0
+
+Route                              Tujuan                             Kontrol keamanan
+                                                                      Auth, tenant isolation, input-size limit
+POST /v1/runs                      Buat sesi pemrosesan input         RBAC dan sumber boleh diakses
+GET /v1/runs/{id}                  Status & rencana tindakan          Owner, version conflict check
+POST /v1/runs/{id}/clarifications  Masukkan jawaban klarifikasi       Preview exact state, immutable version
+GET /v1/actions/{id}/preview       Ambil payload yang akan disetujui  Human-auth only, CSRF, MFA untuk
+                                                                      high-risk
+POST /v1/actions/{id}/decision     Approve/reject tindakan            Service auth + revalidation, no direct
+                                                                      agent access
+POST /internal/execute             Gateway jalankan aksi disetujui    RBAC; tidak expose raw secrets
+GET /v1/runs/{id}/audit            Jejak keputusan versi redacted
+
+6.4 Payload contoh
+
+{
+  "action_id": "ACT-002", "version": 3,
+  "type": "calendar.create", "state": "AWAITING_APPROVAL",
+  "recipient_ids": ["EMP-014", "EMP-032"],
+  "title": "Rapat evaluasi", "location": "Video conference",
+  "start": "2026-11-13T14:00:00+07:00",
+  "end": "2026-11-13T15:00:00+07:00",
+  "timezone": "Asia/Jakarta",
+  "source_refs": ["MSG-001", "MSG-003"],
+  "approval": null
+
+}
+
+7. UI/UX: pengalaman produk
+
+7.1 Prinsip pengalaman
+
+ Clarity before speed: status setiap tindakan mudah dibaca; tidak ada aksi yang disamarkan sebagai
+     otomatis.
+
+ Explain before approve: tampilkan alasan konflik, sumber, dan detail persis sebelum tombol persetujuan
+     aktif.
+
+ One decision at a time: klarifikasi relevan di dalam kartu action; tidak memaksa pengguna mengulang
+     input.
+
+ Safe defaults: tombol setujui disabled ketika field wajib kurang, akses tidak cukup, atau ada konflik kritis.
+ Accessible by design: target WCAG 2.2 AA, seluruh kontrol keyboard-accessible, label eksplisit, fokus
+
+     terlihat, screen-reader status, tanpa status yang hanya diwakili warna.
+
+                                                                      NAVI | 06 NOV 2026 � 10
+7.2 Information architecture                                                     NAVI / PRODUCT REQUIREMENTS / V1.0
+
+Halaman               Komponen utama                                     Tujuan pengguna
+                                                                         Memberi instruksi kerja
+01 Workspace / Inbox  Input chat, upload file, rekam voice (P1), sesi    Melihat hasil pemecahan
+02 Action Plan        terbaru                                            Memperbaiki ketidakjelasan
+03 Resolve Conflicts                                                     Memutuskan secara sadar
+04 Review & Approve   Daftar tindakan, asal instruksi, status, progress  Memastikan yang benar-benar dilakukan
+05 Results & Audit    empat agent                                        Mengelola kebijakan
+06 Settings (P1/P2)
+                      Kartu konflik, opsi kontak/waktu, pertanyaan
+                      terfokus
+
+                      Preview email/calendar/task, diff perubahan,
+                      risiko
+
+                      Receipt per tool, status gagal, timeline audit
+
+                      Timezone, kontak, aturan organisasi, approval
+                      matrix
+
+7.3 Wireframe desktop - Action Plan
+
+                      Mockup layout yang dapat diedit - desktop 3 panel
+
+NAVI / Menu         Instruksi & rencana                                Konflik & status
+
+Workspace           Input: kirim notulen; jadwalkan rapat; buat tugas  Penerima Budi ambigu
+
+Rencana aksi        ACT-001 Email - Perlu klarifikasi                  Jumat 11.30 - risiko jadwal
+
+Persetujuan         ACT-002 Kalender - Tertahan                        0 tindakan dieksekusi
+
+Gambar 3. Susunan desktop NAVI: navigasi, rencana aksi, dan panel konflik. Wireframe spesifikasi, bukan
+                                                              screenshot aplikasi.
+
+7.4 Wireframe mobile - Approval
+
+                      Mockup layout yang dapat diedit - mobile approval card
+
+NAVI � Persetujuan    ACT-002 - Ditahan
+
+Aksi                  Kalender evaluasi
+
+Detail                Jumat 14.00 WIB / 15.00 WITA
+
+Kontrol               Persetujuan tidak aktif bila data belum lengkap
+
+           Gambar 4. Susunan mobile NAVI: kartu peninjauan detail tindakan dan status persetujuan.
+
+7.5 Design system dan perilaku responsif
+
+Area                  Spesifikasi
+
+Tampilan              Light-first, editorial professional; navy #172638, teal #117B78, amber #D67A30, neutral #F5F7F9.
+Tipografi             Inter / system sans; body min 15-16 px di web, heading 22-32 px; line height >= 1.45.
+Spacing               Grid 8 px; konten max 1280 px; whitespace jelas untuk card kompleks.
+Status                Draft (netral), perlu klarifikasi (amber), ditolak (red + icon + teks), disetujui (teal), berhasil (green).
+Desktop >= 1024       Sidebar navigasi, kolom action utama, rail konflik di kanan.
+
+                                                                                              NAVI | 06 NOV 2026 � 11
+                                                                                     NAVI / PRODUCT REQUIREMENTS / V1.0
+
+Area                  Spesifikasi
+Tablet 768-1023
+Mobile <= 767         Sidebar collapsible, review bergantian dengan conflict panel.
+
+Accessibility         Single-column, kartu persetujuan full width, CTA sticky namun semua field dapat dibaca lebih
+Bahasa                dulu.
+
+                      44x44 px hit target, focus ring 2 px, aria-live untuk agent progress, kontras >= 4.5:1 teks biasa, tidak
+                      autoplay tanpa izin.
+
+                      Indonesia utama; label waktu selalu lengkap WIB/WITA/WIT; error harus actionable.
+
+7.6 Microcopy kritis
+
+Kondisi               Teks UI yang dianjurkan
+
+Ambigu                "Ada dua kontak bernama Budi. Pilih penerima yang dimaksud sebelum melanjutkan."
+Conflict
+                      "Instruksi tentang pengiriman laporan saling bertentangan. Pengiriman ditahan sampai ada
+Approval              keputusan."
+Blocked
+Mock success          "Periksa seluruh detail. Menyetujui berarti mengizinkan satu tindakan ini dijalankan dengan isi di
+Unknown               atas."
+
+                      "Tindakan tidak dijalankan karena persetujuan tidak sesuai dengan versi terbaru."
+
+                      "Simulasi selesai. Tidak ada email/undangan sungguhan yang dikirim."
+
+                      "Informasi belum cukup untuk menentukan penerima. Hubungi pemilik data atau pilih manual."
+
+8. Kebutuhan fungsional dan acceptance criteria
+
+ID       Prioritas    User story / fungsi             Kriteria penerimaan (ringkas)
+FR-01    P0           Input teks dan catatan rapat
+FR-02                                                 UI menerima input, menyimpan source ID, hash, trust label.
+         P0           Parse multi-aksi
+FR-03                                                 Satu pesan berisi >= 3 tugas menghasilkan >=3 action dengan
+         P0           Deteksi konflik                 provenance.
+FR-04
+         P0           Klarifikasi minimal             Nama ganda / instruksi bertentangan memicu HOLD, bukan
+FR-05                                                 pilihan otomatis.
+FR-06    P0           Validasi aturan Indonesia
+FR-07                                                 Input lengkap tidak ditanya lagi; input ambigu ditanya field
+FR-08    P0           Perlakuan dokumen sebagai data  yang tepat.
+FR-09
+         P0           Preview exact payload           Unit test pada WIB/WITA/WIT, aturan Jumat, dan dataset
+                                                      libur.
+         P0           Approval human-only
+                                                      Prompt injection tidak dapat membuat tool write berjalan.
+         P0           Gateway fail-closed
+                                                      Setiap action menunjukkan field relevan sebelum approval.
+
+                                                      Tidak bisa approve lewat chat model / API agent.
+
+                                                      Tanpa valid approval / hash berubah -> zero execution.
+
+                                                                                     NAVI | 06 NOV 2026 � 12
+ID     Prioritas User story / fungsi                                               NAVI / PRODUCT REQUIREMENTS / V1.0
+                                            Kriteria penerimaan (ringkas)
+FR-10  P0      Mock tool result
+FR-11                                       Mock email/calendar/task memberi receipt & status
+FR-12  P0      Audit immutable events       individual.
+FR-13                                       Setiap state change punya actor, timestamp, correlation ID.
+FR-14  P0      Re-run tests & evidence      Screenshot / JSON result reproducible, gagal dilaporkan.
+FR-15                                       Bandingkan output 4 agent dengan request asli.
+FR-16  P1      Plan independent reviewer    External, bulk recipients, payment -> konfirmasi ekstra.
+FR-17                                       STT + transcript preview; fallback teks jika gagal.
+FR-18  P1      Risk-based confirmation      Hanya pending dispatch bisa dibatalkan; tidak mengklaim
+                                            recall.
+       P1      Voice note Bahasa Indonesia  OAuth scope minimal, user-owned connection, audit provider.
+                                            Cross-tenant test tidak membocorkan data atau approval.
+       P1      Undo within 60 seconds
+
+       P2      Integrasi tools asli
+
+       P2      Multi-tenant, RBAC, SSO
+
+9. Non-functional requirements dan keamanan
+
+Dimensi        MVP /                 Acceptance
+               sesudahnya
+Safety         P0                    0 eksekusi tanpa approval valid; 0 kebocoran melalui mock tool.
+Reliability    P0                    Tool error tidak diklaim sukses; retries aman, action idempotent.
+Performance    P0                    Target internal: happy path live <= 90 detik, status progress tampil; ukur nyata.
+Availability   P2                    Target awal 99.5% untuk web API setelah dibebaskan ke pengguna sungguhan.
+Accessibility  P0                    Keyboard, screen-reader semantics, kontras, responsif diuji manual.
+Security       P0-P2                 RBAC, CSRF, rate limiting, threat model; auth enterprise pada P2.
+Privacy        P0                    Data sintetis; redaction logs; retention data demo terbatas dan bisa dihapus.
+Scaling        P2                    Stateless API, queue, horizontal worker, DB migration + backups.
+Observability  P0-P2                 Correlation IDs, failure counts, approval denials; alerts pada P2.
+
+9.1 Threat model minimum          Pertahanan wajib
+                                  Source trust tags; not instruction; read-only agent tool access; policy checks backend.
+  Ancaman                         Auth manusia, csrf protection, payload hash, version, expiry, state checks.
+  Prompt injection dari           User identity dari authenticated session, bukan teks yang ditulis.
+  catatan/attachment
+  Approval bypass lewat endpoint
+  Identity spoof di chat
+
+                                             NAVI | 06 NOV 2026 � 13
+                                                              NAVI / PRODUCT REQUIREMENTS / V1.0
+
+Ancaman                                 Pertahanan wajib
+Cross-tenant disclosure
+Replay / double-submit                  tenant_id scoping di API dan DB; deny default; integration test.
+PII/log exfiltration
+Malicious MCP connector                 Nonce/idempotency unique, consumed approvals, transaction lock.
+Unexpected spend/loop
+                                        Metadata/redacted audit, encrypted storage, no raw secrets in evidence.
+
+                                        Tool allowlist, pinned versions, minimal scopes, review tool definitions.
+
+                                        Timeout, iteration limit, model cost cap, token budgets dan circuit breaker.
+
+9.2 Data handling dan kebijakan
+
+Hackathon: seluruh demo menggunakan data fiktif; untuk data nyata setelah kompetisi perlu analisis privasi,
+consent/landasan pemrosesan sesuai hukum yang berlaku, retensi, enkripsi, peran controller/processor, dan
+dokumentasi dampak bila relevan. Periode retensi merupakan keputusan organisasi, bukan angka otomatis
+dari dokumen hackathon.
+
+Audit log harus append-only atau tamper-evident dengan hash chain jika layak, termasuk event DENIED,
+APPROVED, EXECUTION_STARTED, EXECUTION_SUCCEEDED/FAILED. Audit yang diunduh untuk juri harus
+menghapus informasi rahasia.
+
+10. Infrastruktur repositori, lingkungan, dan CI/CD
+
+10.1 Struktur monorepo yang direkomendasikan
+
+bentur-ai/
+
+apps/
+
+web/        # Next.js UI + pages
+
+api/        # Fastify API (P2; MVP optional unified API)
+
+packages/
+
+schemas/    # Zod/JSON schema, source of truth
+
+domain/     # state machine, approval policy, risk rules
+
+mock-connectors/ # email, calendar, tasks receipts
+
+ui/         # design system components
+
+workbuddy/
+
+skills/     # orchestrator, interpreter, conflict, validator
+
+sample-inputs/ # dataset fiktif
+
+WORKBUDDY_EVIDENCE.md
+
+tests/
+
+unit/ integration/ e2e/ adversarial/
+
+docs/
+
+prd/ security/ runbooks/ architecture/
+
+evidence/   # redacted screenshots, logs, results
+
+.github/workflows/
+
+ci.yml
+
+README.md
+
+                                                                                                          NAVI | 06 NOV 2026 � 14
+10.2 Environments dan deployment                                                       NAVI / PRODUCT REQUIREMENTS / V1.0
+
+Lingkungan      Tujuan                                Data / guardrails
+
+local           Pengembangan agent, mock gateway      Synthetic fixtures; .env.example tanpa secret.
+                dan UI
+                                                      Database terisolasi, dummy mail/calendar; tidak ada real
+preview per PR  Review UI dan e2e otomatis            writes.
+                                                      Kredensial terpisah; seeded dataset; wajib approval untuk
+staging         Uji integrasi dan acceptance sebelum  destructive changes.
+production      rilis                                 Protected branch, required review, monitoring, backups,
+                                                      rollbacks.
+                Hanya setelah gateway dan threat
+                model lulus
+
+10.3 Pipeline GitHub Actions dan rilis
+
+12. Feature branch -> pull request; CODEOWNERS untuk policy, prompts, gateway, dan workflow CI.
+13. Job CI: lockfile install; lint/format; TypeScript typecheck; unit tests; schema tests; integration tests.
+14. Job security: secret scan, dependency audit/SCA, SAST, permission policy diff; semua harus pass.
+15. Job agent-eval: test dataset dan adversarial prompt injection; pastikan nol unauthorized execution.
+16. Job web-e2e: Playwright desktop/mobile, approval flow, conflict states, accessibility checks.
+17. Review manusia + branch protection; preview environment dibangun secara otomatis untuk inspeksi.
+18. Release: staging / candidate -> smoke test -> persetujuan rilis -> production. Jangan melakukan DB
+
+     migration destruktif dalam satu langkah otomatis.
+19. Rollback: pin versi terakhir yang lulus; rollback UI/API, pertahankan audit; untuk perubahan schema
+
+     gunakan expand/contract migration.
+
+10.4 Contoh workflow CI (konseptual)
+
+name: CI
+on: [pull_request, push]
+permissions: {contents: read}
+jobs:
+
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+     - uses: actions/checkout@<PINNED_COMMIT_SHA>
+     - uses: actions/setup-node@<PINNED_COMMIT_SHA>
+       with: {node-version-file: '.nvmrc', cache: 'npm'}
+     - run: npm ci
+     - run: npm run lint && npm run typecheck
+     - run: npm run test:unit && npm run test:integration
+     - run: npm run test:security && npm run test:agent-eval
+     - run: npm run build
+
+# e2e / preview / release jobs dipisah; gunakan reviewed SHA pinned.
+
+Catatan: contoh di atas merupakan kerangka, bukan workflow runnable sebelum proyek dan SHA actions
+terpilih. Jangan menaruh token di YAML atau artifact. Vercel Git integration dapat membuat preview tiap PR;
+gunakan Deployment Checks atau staging & promote untuk memastikan hanya build yang telah diuji yang
+dirilis.
+
+                                                                                                                               NAVI | 06 NOV 2026 � 15
+                                                        NAVI / PRODUCT REQUIREMENTS / V1.0
+
+10.5 Revisi, rollback, backup, dan incident response
+
+Proses              Aturan operasional
+
+Database migration  Versioned scripts, expand-and-contract, predeploy backup, test restore bulanan P2.
+Rollback aplikasi   Rollback ke release tag dan image digest tervalidasi; jangan hapus audit event.
+Secrets             Env-specific secret manager, rotation, no plaintext credentials di log/PR.
+Incident            Jika bypass approval: nonaktifkan gateway writes, kumpulkan trace, audit, RCA, fix + regression
+Cost control        test.
+                    Set caps token/session, model fallback, timeout tiap tool, alerts untuk egress dan API spend.
+
+11. Observability, analytics, dan tata kelola kualitas
+
+Event / metric                       Definisi
+agent.run_started / completed        Waktu total, token/cost, agent version, result status.
+conflict.detected / resolved         Jenis konflik, tingkat risiko, sumber, keputusan manusia.
+plan.validation_failed               Reason code, action ID; tidak catat konten sensitif.
+approval.granted / denied / expired  Approver, action ID, version, payload hash, timestamp.
+execution.blocked                    Alasan gate menolak; wajib dipantau dan diberi alert pada anomali.
+tool.succeeded / failed              Provider receipt, latency, idempotency key, retry count.
+                                     Action extraction precision/recall, conflict recall, latency p50/p95, wrong-action
+quality.metrics                      rate.
+
+Dashboard operasi awal menampilkan run total, pending approvals, conflicts unresolved, mock execution
+successes/failures, dan keamanan. Jangan mengekspos konten sensitif sebagai analytics publik.
+
+12. Test strategy dan evidence
+
+12.1 Test suite Track B - 20 kasus inti
+
+ID      Skenario                         Expected result
+                                         Action plan benar tanpa pertanyaan tambahan
+TC-01   Instruksi tunggal jelas          Email + kalender + tugas dipisah beserta field
+TC-02   Instruksi berisi 3 aksi          Klarifikasi, tidak mengirim
+TC-03   Dua kontak Budi                  Tanya atau gunakan profil terverifikasi
+TC-04   Zona waktu tidak diketahui       Jam dikonversi benar
+TC-05   WIB ke WITA                      Jam dikonversi benar
+TC-06   WIB ke WIT
+
+                                                        NAVI | 06 NOV 2026 � 16
+                                                                           NAVI / PRODUCT REQUIREMENTS / V1.0
+
+ID     Skenario                           Expected result
+TC-07  Jumat pada window salat
+TC-08  Hari libur nasional                Usulkan waktu alternatif dan jangan booking otomatis
+TC-09  Instruksi kontradiktif dua pesan
+TC-10  Laporan belum final                Tandai dan tawarkan alternatif
+TC-11  Prompt injection dalam catatan
+TC-12  Dokumen meminta broadcast          ConflictReport + status HOLD
+TC-13  Approval tidak ada
+TC-14  Approval untuk versi lama          Tahan email sampai status jelas
+TC-15  User palsu mengaku pimpinan
+TC-16  Approve 1 dari 3 action            Tidak menuruti instruksi dokumen; tandai ignored
+TC-17  Tool gagal
+TC-18  Replay / duplicate request         Tidak mengeksekusi aksi yang bukan instruksi pengguna
+TC-19  Penerima eksternal + banyak orang
+TC-20  Surprise case tak dikenal          Gateway menolak / tidak ada receipt
+
+                                          Gateway menolak ketika payload berubah
+
+                                          RBAC tidak berubah oleh teks
+
+                                          Hanya action approved yang mendapat receipt
+
+                                          Status FAILED dan error tercatat; tidak klaim sukses
+
+                                          Idempotency mencegah eksekusi dua kali
+
+                                          Konfirmasi risiko tinggi; tak ada aksi otomatis
+
+                                          Respons aman dan cukup cepat atau minta klarifikasi
+
+12.2 Tingkatan pengujian dan kriteria release
+
+ Unit tests: state machine, hash verification, authorization guards, timezone conversion, holiday rule
+     fixtures.
+
+ Integration tests: actor -> preview -> approval -> mock tool receipt -> append-only audit.
+ Agent eval: structured output parsable, provenance, conflict detection, clarification question minimization.
+ Security/adversarial: tool injection, approval spoof/replay, cross-tenant access, PII leak, prompt injection,
+
+     mutation after approval.
+ E2E: input, editing plan, approve/reject, partial results, keyboard and mobile view, error states.
+ P0 release gate: 100% safety-critical tests pass; seluruh test case wajib dijalankan; setiap kegagalan lainnya
+
+     transparan dengan mitigasi.
+
+12.3 Format evidence hasil uji
+
+test_id | scenario | build_sha | prompt_version | model_version
+input_fixture | expected | actual | pass_fail | root_cause
+agent_trace_ref | gateway_log_ref | screenshot_ref | reviewer | timestamp
+
+Apabila test resmi pada kickoff berbeda dari dataset internal, tambahkan case resmi dan laporkan hasil
+terpisah. Jangan mengklaim internal test 20/20 sebagai test resmi jika belum diterima/diuji.
+
+                                                                                  NAVI | 06 NOV 2026 � 17
+13. Strategi demonstrasi dan submission                                NAVI / PRODUCT REQUIREMENTS / V1.0
+
+13.1 Video 5-8 menit (target 7 menit)                              Evidence
+                                                                   Skenario sebelum otomatisasi
+Waktu        Isi                                                   Satu kalimat proposisi nilai
+                                                                   Gambar arsitektur + WorkBuddy
+00:00-00:40  Masalah: konflik instruksi dan dampaknya              workflow
+00:40-01:20  Produk NAVI, persona, nilai                           Screen recording run aktual
+                                                                   Gateway denial + successful approved
+01:20-02:10  Arsitektur 4 peran + trust boundary                   execution
+                                                                   Screenshot + audit log
+02:10-04:15  Live input -> multi-action -> konflik -> klarifikasi  Source/workflow export + reflection
+
+04:15-05:30  Preview, approval, mock tool receipt
+
+05:30-06:20  Test results: normal, adversarial, gagal terbuka
+06:20-07:00  Peran WorkBuddy, batas dan roadmap
+
+13.2 Surprise test 90 detik
+
+Sediakan fixture reset, jam sistem tetap untuk demonstrasi, dataset sintetis yang dikenal schema tetapi bukan
+jawaban yang dihafal, tombol log yang mudah dibuka, dan fallback untuk gangguan voice/network. Ukur
+dengan stopwatch; jika ada ambiguitas yang tidak dapat diselesaikan, agent harus menahan tindakan dan
+menyebut alasan, bukan mengarang.
+
+13.3 Berkas wajib dan status sebelum pengumpulan
+
+Komponen                          Format / acceptance
+
+Judul + blurb <= 10 kata          NAVI; "AI Agent yang menyelesaikan konflik instruksi sebelum
+                                  menjalankan tindakan." (9 kata)
+
+Deskripsi proyek                  Problem, track, skenario, target user, workflow, prompt, dampak terukur,
+                                  batasan.
+Accountability sheet (1 halaman)  Boleh akses / otonom / perlu izin / tak pernah dilakukan, termasuk mock-only
+Hasil pengujian + screenshot      note.
+Diagram arsitektur                Jalankan seluruh test case, termasuk gagal; sumber evidence jelas.
+Video demo 5-8 menit              Tampilkan komponen, trust boundaries, dan trade-off.
+Sharing nilai WorkBuddy           Kondisi klarifikasi/penolakan/persetujuan dan WorkBuddy nyata.
+Source code / workflow export     Penggunaan Skill/agent, orkestrasi dan insight tooling.
+Opsional/bonus                    Repo publik bersih secrets atau WorkBuddy export + bukti.
+                                  Cover 16:9 dan URL live demo bila stabil.
+
+                                                                   NAVI | 06 NOV 2026 � 18
+                                                                                                                                             NAVI / PRODUCT REQUIREMENTS / V1.0
+
+TENGGAT TERKINI Situs Tencent Cloud menampilkan batas pengumpulan 7 November 2026 pukul 23.59 WIB.
+Jadwal pengumuman finalis di beberapa bagian halaman tidak konsisten; konfirmasi portal untuk
+pengumuman. Pastikan tim telah terdaftar secara terpisah.
+
+14. Roadmap: hackathon -> produk berkembang
+
+Tahap                Scope                                                     Definition of done
+R0 - Hackathon P0
+R1 - Stabilitas      WorkBuddy roles, input teks, tiga action types, konflik,  Demo nyata; tak ada critical bypass;
+R2 - Kolaborasi tim  validator, approval gateway, mocks, audit, web review     paket submission lengkap.
+R3 - Enterprise      UI, test suite, submission.
+R4 - Platform
+                     Voice input, duplicate-safe retries, high-risk approval,  Beta test dan regression aman.
+                     UX accessibility sweep, evaluator agent.
+
+                     Auth, org roles, share workspace, integrations nyata      Multi-user pilot dengan audit dan izin.
+                     via OAuth, rulebook admin, event queue.
+
+                     SSO, multi-tenant isolation, policy templates, advanced   Keamanan/pemulihan/biaya diuji.
+                     analytics, retention controls, observability SLO.
+
+                     Developer tool registry, connector marketplace            Workflow reusable dan perubahan
+                     terkurasi, policy-as-code, deployment templates.          terkelola.
+
+14.1 Backlog dan prioritas untuk 24 jam menjelang submission
+
+Urutan  Deliverable                                                    Stop/go
+
+1       Prove WorkBuddy skills + trace nyata                           Tanpa bukti, tidak klaim four-agent
+                                                                       production.
+
+2       ActionPlan JSON + ConflictReport + Validator                   Semua mock input tercatat benar.
+
+3       Gateway backend + approval snapshot + mock receipts            Direct execution tanpa approval HARUS gagal.
+
+4       UI minimal flow: input, clarify, preview, decision, audit      Tidak ada dead-end atau misleading status.
+
+5       20 test + screenshots + audit + failures                       Kritikal lulus; nonkritikal dilaporkan.
+
+6       Submission docs, repo/export, video, link checks               Semua komponen wajib selesai sebelum
+                                                                       tenggat.
+
+14.2 Risiko dan mitigasi                Prioritas         Mitigasi
+                                        Tinggi
+  Risiko                                Kritis            Gunakan WorkBuddy sebagai runtime demonstrasi, backend
+  Salah menganggap WorkBuddy sebagai                      adapter tidak bergantung API tak terverifikasi.
+  hosted API publik
+  Approval dapat dipalsukan lewat chat                    Hard gate di backend, human auth, test T13-T16.
+
+                                                                                NAVI | 06 NOV 2026 � 19
+                                                                  NAVI / PRODUCT REQUIREMENTS / V1.0
+
+Risiko                                       Prioritas  Mitigasi
+Empat agent memperlambat demo                Tinggi
+                                                        Output schema ketat, paralel baca yang aman, timeout,
+                                                        fallback klarifikasi.
+
+Libur/jam salat tidak akurat                 Tinggi     Holiday fixtures bersumber, jadwal Jumat per lokasi dan
+                                                        aturan organisasi, jangan menebak.
+
+Status mock disalahartikan sebagai tindakan  Tinggi     Label "Simulasi" pada UI/video dan receipt.
+nyata
+
+Tenggat submission terlewat                  Kritis     Bekukan scope P0, siapkan evidence sejak awal, cek formulir
+                                                        sebelum akhir.
+Repo membocorkan data                        Kritis
+                                                        Secret scan + fake dataset + public evidence redacted.
+
+14.3 RACI / tanggung jawab                              Responsible                  Approver
+                                                        Product owner                Team lead
+  Fungsi                                                AI engineer                  Product owner
+  Product scope, acceptance, submission                 Backend engineer             Security reviewer / lead
+  WorkBuddy skill workflow, agent eval                  Frontend designer/developer  Product owner
+  Approval gateway, security, API                       DevOps / full-stack          Team lead
+  UI/UX, accessibility, recording
+  CI/CD, release, evidence automation
+
+Satu orang boleh merangkap beberapa peran karena kompetisi membatasi tim 1-3 peserta; tanggung jawab
+tetap perlu jelas.
+
+15. Acceptance & release checklist
+
+ P0: Minimum satu run dengan >=3 tindakan dapat diproses end-to-end dari input hingga receipt mock.
+ P0: Nama ambigu memicu klarifikasi, tanpa side effect.
+ P0: Hari libur dan Jumat dicek dari data yang sah dengan zona waktu eksplisit.
+ P0: Semua dokumen untrusted; prompt injection tidak menjalankan tool.
+ P0: Gateway menolak tanpa approval, replay, expired token, payload mutation, identity spoof.
+ P0: UI memperlihatkan konten yang akan dieksekusi, status per action, dan warning yang bisa dibaca.
+ P0: WorkBuddy menjalankan peran yang diklaim dan hasilnya punya evidence.
+ P0: Mock tool menyimpan receipt; audit konsisten dengan hasilnya.
+ P0: Test results termasuk kegagalan, lengkap screenshot/trace.
+ P0: Semua submission items siap dan tautannya bisa dibuka penilai.
+
+ RELEASE DECISION Jangan nyatakan "compliant" atau "siap juara" sebelum seluruh item P0 diuji pada build
+ yang sama dengan video dan submission. Jika belum lulus, kurangi scope non-wajib atau tandai keterbatasan
+ secara terbuka.
+
+                                                                                     NAVI | 06 NOV 2026 � 20
+                                                                            NAVI / PRODUCT REQUIREMENTS / V1.0
+
+Lampiran A. Contoh skema hasil agent
+
+{
+  "run_id": "RUN-001",
+  "actions": [
+    {"id":"ACT-001", "type":"email.send", "status":"NEEDS_CLARIFICATION",
+    "who":null, "what":"Kirim notulen", "when":null,
+    "source_spans":["MSG-001:0-42"]},
+    {"id":"ACT-002", "type":"calendar.create", "status":"HOLD",
+    "who":["EMP-014"], "when":"Jumat 11:30",
+    "timezone":null, "source_spans":["MSG-001:43-105"]},
+    {"id":"ACT-003", "type":"task.create", "status":"NEEDS_CLARIFICATION",
+    "who":null, "what":"Selesaikan laporan", "due":null,
+    "source_spans":["MSG-001:106-155"]}
+  ],
+  "conflicts": [{"action_id":"ACT-001", "code":"DOCUMENT_NOT_FINAL"}]
+
+}
+
+Lampiran B. Referensi dan status ketentuan
+
+1. Panduan peserta (Drive): https://drive.google.com/file/d/1mGFTmLzSkbxHx-7UBmsiB-GMDNBfzSWm/view
+2. Tencent Cloud - laman kompetisi: https://tch.tencentcloud.com/contest/47
+3. AIClub - halaman event: https://aiclub.id/event/tencent-cloud-hackathon-2026
+4. Tencent WorkBuddy - product overview: https://indonesia.tencentcloud.com/products/workbuddy
+5. Tencent WorkBuddy Managed Agents (opsi masa depan):
+https://indonesia.tencentcloud.com/products/workbuddy-managed-agents
+6. Next.js - Deploying: https://nextjs.org/docs/app/getting-started/deploying
+7. OWASP - AI Agent Security Cheat Sheet:
+https://cheatsheetseries.owasp.org/cheatsheets/AI_Agent_Security_Cheat_Sheet.html
+8. OWASP - Agent and MCP Security: https://owasp.github.io/DevSecOpsGuideline/2-Process/2-2-Develop/2-2-5-
+AI-Agent-and-MCP-Security/
+9. Vercel - Git deployment/CI guidance: https://vercel.com/docs/git
+Bila informasi jadwal, field formulir, atau akses WorkBuddy berubah, sumber primer penyelenggara dan
+kemampuan akun aktual mengungguli asumsi teknis dokumen ini.
+
+                                                                            NAVI | 06 NOV 2026 � 21
+                                                                                                                                              NAVI / PRODUCT REQUIREMENTS / V1.0
+
+16. NAVI sebagai lapisan AI pada aplikasi
+organisasi
+
+NAVI merupakan modul AI Office Agent yang dapat diintegrasikan tanpa mengganti sistem inti organisasi.
+Aplikasi induk tetap menjadi system of record untuk identitas, karyawan, email, jadwal, dan tugas. NAVI
+hanya menyusun rencana, memvalidasi, meminta persetujuan, dan menyerahkan perintah terkontrol kepada
+konektor resmi.
+
+16.1 Tiga mode instalasi yang didukung
+
+Mode                            Di mana muncul                        Kapan dipilih
+Embedded subpage + SSO                                                Organisasi memiliki web internal dan
+(direkomendasikan)              Aplikasi organisasi: /ai/navi atau    menginginkan pengalaman terpadu
+                                menu Asisten AI; UI NAVI tampil pada  tanpa rewrite UI.
+Widget / side panel             route yang sama setelah autentikasi
+                                                                      Sistem besar dengan proses yang
+Headless API                    Tombol NAVI di kanan aplikasi;        sudah ada; membutuhkan bantuan
+                                membuka panel input, konflik, dan     kontekstual.
+                                persetujuan yang disajikan oleh
+                                SDK/widget                            Organisasi ingin tetap memakai
+                                                                      design system dan alur pengguna
+                                UI native milik organisasi; backend   sendiri.
+                                memanggil API NAVI untuk rencana,
+                                klarifikasi, approval, dan execution
+                                status
+
+Mode tambahan untuk aplikasi tanpa integrasi UI: event/webhook connector. Sistem dapat membuat draft
+plan dari sebuah event, tetapi event tidak pernah dianggap sebagai persetujuan pengguna.
+
+16.2 Rekomendasi integrasi menurut kematangan organisasi
+
+Kondisi organisasi              Implementasi yang disarankan          Batas tindakan
+Tidak memiliki sistem internal
+Ada web ERP/HRIS/CRM            NAVI web standalone dengan            Tidak memiliki akses ke data kantor
+Ada aplikasi mobile             identitas NAVI, mock connectors       nyata.
+Sistem legacy tidak punya API   untuk demo
+                                                                      Baca data sesuai role; eksekusi setelah
+                                Pasang menu NAVI dan SSO OIDC;        approval.
+                                pakai scoped API connector ke sistem
+                                tersebut                              Persetujuan harus terjadi via sesi
+                                                                      terautentikasi.
+                                Tampilkan NAVI melalui deep
+                                link/webview terotorisasi atau API    Tidak mengotomasi GUI / DB langsung
+                                native; gunakan login backend         tanpa izin.
+
+                                Gunakan file/import terkontrol untuk
+                                baca, ekspor hasil ke antrean review
+                                manusia
+
+                                                                      NAVI | 06 NOV 2026 � 22
+                                              NAVI / PRODUCT REQUIREMENTS / V1.0
+
+16.3 Diagram komponen dan aliran kepercayaan
+
+ Pengguna  Aplikasi organisasi (SSO, konteks layar, role)
+ Aplikasi organisasi  Backend NAVI (token exchange, tenant scoping, rate limiting)
+ Backend NAVI  WorkBuddy Agent Runtime (permintaan terstruktur + tool baca terbatas)
+ WorkBuddy  Proposed Action Plan (tidak memiliki executor credentials)
+ NAVI  Approval UI (preview literal payload per aksi + version/hash)
+ Persetujuan manusia  Approval Service (identitas, tenant, versi, hash, expiry)
+ Execution Gateway  Konektor resmi ERP/email/calendar/tasks (idempotent)
+ Semua tahapan  Audit Log (tamper-evident + correlation ID)
+
+Trust boundary: browser dan teks dokumen adalah input tidak tepercaya; identitas dari backend berotorisasi;
+output model hanyalah proposal; execution gateway adalah satu-satunya komponen dengan credential sistem
+tujuan.
+
+16.4 Kontrak integrasi minimum (API NAVI)
+
+Endpoint usulan                     Fungsi / aturan
+POST /v1/sessions
+POST /v1/sessions/{id}/interpret    Buat sesi terikat tenant_id, user_id, scopes, dan
+POST /v1/plans/{id}/clarifications  correlation_id dari backend identity provider.
+GET /v1/plans/{id}/preview
+POST /v1/actions/{id}/approve       Kirim input teks atau transkrip; hasilnya action candidates
+POST /v1/actions/{id}/execute       + ambiguity report.
+GET /v1/actions/{id}/audit
+                                    Jawab klarifikasi; revisi menghasilkan plan_version baru
+                                    dan membatalkan approvals terkait.
+
+                                    Mengembalikan exact action payload untuk ditinjau
+                                    sebelum approve.
+
+                                    Backend mencatat klik persetujuan langsung dari user
+                                    terautentikasi untuk payload hash dan versi tertentu.
+
+                                    Hanya dipanggil eksekutor server setelah approval sah,
+                                    scope cocok, dan idempotency key valid.
+
+                                    Audit akses dibatasi menurut hak akses; respons
+                                    disamarkan jika mengandung PII.
+
+Contoh konteks: tenant_id, user_id, locale=id-ID, timezone=Asia/Jakarta, target_app=org-erp,
+object_ref=meeting-123; semua identitas dan izin diputuskan backend, bukan dari klaim pengguna. Semua API
+dan JSON di bagian ini adalah kontrak rancangan NAVI, bukan endpoint resmi Tencent.
+
+16.5 SSO, permission, dan keamanan integrasi
+
+ Gunakan OIDC Authorization Code + PKCE atau sesi internal server yang tervalidasi; terbitkan token
+     audience khusus NAVI. Jangan kirim token ERP jangka panjang ke frontend atau model.
+
+ Konteks organisasi dihasilkan dari token yang terverifikasi: issuer, audience, expiration, tenant, user,
+     scope, role, dan sesi; jangan percaya tenant_id dari browser.
+
+                                              NAVI | 06 NOV 2026 � 23
+                                                                                                                                              NAVI / PRODUCT REQUIREMENTS / V1.0
+
+ Konektor hanya memiliki least-privilege scopes, per-tenant isolation, rate limits, serta batas jumlah
+     penerima. Klasifikasi informasi harus dicek sebelum membaca sumber.
+
+ Approval hanya valid jika user berwenang, action version/hash cocok, token belum kedaluwarsa, dan
+     rencana belum berubah. CSRF, replay protection, idempotency key, dan audit log wajib ada.
+
+ Pada widget/iframe lintas origin, gunakan CSP frame-ancestors allowlist, postMessage dengan origin
+     check, serta pembatasan cookie; prefer same-origin route jika memungkinkan.
+
+ Untuk webhook, gunakan signature HMAC, timestamp tolerance, nonce/idempotency, dan rotasi rahasia;
+     semua event eksternal diperlakukan sebagai data tanpa otoritas menyetujui tindakan.
+
+ Untuk data riil, tetapkan retention, enkripsi at-rest/in-transit, lokasi penyimpanan, kebijakan logging dan
+     pemrosesan data oleh provider sesuai persetujuan organisasi.
+
+ Jika WorkBuddy Managed Agents belum tersedia untuk akun/region, gunakan WorkBuddy untuk
+     workflow pengembangan dan demo, dengan mock adapter pada API platform. Jangan klaim akses API
+     resmi yang belum diuji.
+
+16.6 Pengembangan SDK, CI/CD, dan multi-tenant
+
+ Workspace monorepo: apps/web (NAVI console), apps/api (approval + plan service), apps/worker
+     (controlled execution), packages/sdk-js (widget/API client), packages/contracts (schemas),
+     adapters/workbuddy, adapters/mock, adapters/org-app.
+
+ Buat tenant-level connector config: OAuth scopes, allowed object types, branding, webhook URLs,
+     notification channels, policy versions, retention; deny-by-default.
+
+ GitHub Actions: lint + typecheck + unit + integration + policy/injection tests + browser E2E; wajib negatif
+     tes unapproved execute sebelum bisa merge.
+
+ Preview deploy setiap PR. Production release dari commit yang telah diperiksa, menjalankan migration
+     yang kompatibel, staging smoke test, lalu promotion. Rollback tidak boleh mengubah bukti persetujuan.
+
+ Metrik: plan_parse_accuracy, ambiguity_detection_rate, approval_bypass_count (target 0),
+     execution_duplicate_count (target 0), p95 latency, audit_completeness, error rate.
+
+ Integrasi organisasi baru diaktifkan bertahap: read-only pilot, mock execution, approval real + mock
+     output, lalu real connector setelah izin dan pentest.
+
+16.7 Ketersediaan WorkBuddy API dan status produk
+
+Tencent Cloud memublikasikan WorkBuddy Managed Agents sebagai layanan enterprise yang mendukung
+custom agents, APIs/SDKs, dan penyematan ke sistem OA atau aplikasi organisasi. Namun, fitur, harga, akses
+kredensial, region, dan integrasinya harus diverifikasi di akun Tencent yang akan dipakai sebelum dinyatakan
+production-ready. Sumber: https://indonesia.tencentcloud.com/products/workbuddy-managed-agents
+Untuk penjurian, tetap tunjukkan penggunaan WorkBuddy yang benar-benar berjalan. Demo web atau mock
+adapter tidak boleh diklaim telah terhubung ke runtime WorkBuddy apabila belum terverifikasi.
+
+                                                                                                                               NAVI | 06 NOV 2026 � 24
+                                                                                                                                              NAVI / PRODUCT REQUIREMENTS / V1.0
+
+17. Identitas sementara NAVI dan tata kelola
+merek
+
+Untuk pengajuan hackathon, gunakan NAVI sebagai nama proyek / codename dan jangan menampilkan
+kandidat nama komersial lain dalam materi publik. Judul yang konsisten: NAVI - Conflict-Aware Office Agent.
+Blurb (9 kata): "Mengubah instruksi ambigu menjadi tindakan aman dengan persetujuan manusia."
+NAVI hanya nama sementara dan bukan klaim kepemilikan merek. Perlu penelusuran resmi di PDKI,
+terutama kelas 9 dan 42, termasuk ejaan dan pelafalan yang mirip. Tinjau status terkini, nomor permohonan,
+pemilik, kelas, dan masa perlindungan. PDKI: https://pdki-indonesia.dgip.go.id/; klasifikasi:
+https://skm.dgip.go.id/.
+Proyek hackathon harus menggunakan data fiktif dan repo yang telah disanitasi. Nama rahasia, strategi
+komersial, atau kode yang tidak diperlukan untuk bukti WorkBuddy sebaiknya tidak dimasukkan ke paket
+submission; tetap penuhi seluruh dokumen wajib, sumber/workflow, serta evidence.
+
+                                                                                                                               NAVI | 06 NOV 2026 � 25
+

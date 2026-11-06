@@ -1,0 +1,62 @@
+{
+  "NOTICE": "Identitas fiktif. Semua alamat memakai domain example.invalid yang tidak bisa menerima pesan sungguhan.",
+  "authenticated_actor_id": "USR-001",
+  "users": [
+    {
+      "id": "USR-001",
+      "name": "Maya Putri",
+      "role": "koordinator",
+      "site": "JKT",
+      "email": "maya@demo.example.invalid",
+      "can_approve": [
+        "email.create",
+        "calendar.create",
+        "task.create"
+      ]
+    },
+    {
+      "id": "USR-101",
+      "name": "Budi Santoso",
+      "role": "staf",
+      "site": "JKT",
+      "email": "budi.santoso@demo.example.invalid"
+    },
+    {
+      "id": "USR-102",
+      "name": "Budi Pratama",
+      "role": "staf",
+      "site": "MKS",
+      "email": "budi.pratama@demo.example.invalid"
+    },
+    {
+      "id": "USR-103",
+      "name": "Sari Lestari",
+      "role": "staf",
+      "site": "JKT",
+      "email": "sari@demo.example.invalid"
+    },
+    {
+      "id": "USR-104",
+      "name": "Rahmat Hidayat",
+      "role": "staf",
+      "site": "MKS",
+      "email": "rahmat@demo.example.invalid"
+    },
+    {
+      "id": "USR-105",
+      "name": "Ayu Wati",
+      "role": "staf",
+      "site": "JYP",
+      "email": "ayu@demo.example.invalid"
+    },
+    {
+      "id": "USR-200",
+      "name": "Dina Utami",
+      "role": "manager",
+      "site": "JKT",
+      "email": "dina@demo.example.invalid",
+      "can_approve_high_risk": true
+    }
+  ],
+  "important": "Nama yang diketik di pesan tidak menjadi identitas/role yang terautentikasi. Ambiguitas Budi harus diklarifikasi dengan user ID."
+}

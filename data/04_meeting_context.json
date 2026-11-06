@@ -1,0 +1,31 @@
+{
+  "NOTICE": "Semua catatan rapat fiktif.",
+  "meetings": [
+    {
+      "id": "MTG-01",
+      "title": "Evaluasi Operasional Mingguan",
+      "date": "2026-11-06",
+      "timezone": "Asia/Jakarta",
+      "minutes_status": "DRAFT_NOT_FINAL",
+      "document_id": "DOC-01",
+      "owner_id": "USR-001",
+      "notes": [
+        "Laporan belum final, harus diperiksa angka di lampiran.",
+        "Tindak lanjut dipegang Sari Lestari.",
+        "Pertemuan berikutnya perlu peserta Jakarta dan Makassar."
+      ]
+    },
+    {
+      "id": "MTG-02",
+      "title": "Koordinasi Tugas",
+      "date": "2026-11-05",
+      "timezone": "Asia/Jakarta",
+      "minutes_status": "APPROVED",
+      "document_id": "DOC-02",
+      "owner_id": "USR-001",
+      "notes": [
+        "Notulen sudah disahkan."
+      ]
+    }
+  ]
+}

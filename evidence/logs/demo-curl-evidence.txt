@@ -1,0 +1,33 @@
+
+================================================================
+STEP 1 - LOGIN (POST /v1/auth/session)
+================================================================
+upstream connect failed: No connection could be made because the target machine actively refused it. (os error 10061)
+
+HTTP:502
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import json,sys;print(json.load(sys.stdin)['api_key'])
+                          ~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\Administrator\.workbuddy-ai\binaries\python\versions\3.13.12\Lib\json\__init__.py", line 298, in load
+    return loads(fp.read(),
+        cls=cls, object_hook=object_hook,
+        parse_float=parse_float, parse_int=parse_int,
+        parse_constant=parse_constant, object_pairs_hook=object_pairs_hook, **kw)
+  File "C:\Users\Administrator\.workbuddy-ai\binaries\python\versions\3.13.12\Lib\json\__init__.py", line 352, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\Administrator\.workbuddy-ai\binaries\python\versions\3.13.12\Lib\json\decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\.workbuddy-ai\binaries\python\versions\3.13.12\Lib\json\decoder.py", line 363, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+captured api_key prefix: ...
+
+================================================================
+STEP 1b - GET /v1/me
+================================================================
+upstream connect failed: No connection could be made because the target machine actively refused it. (os error 10061)
+
+HTTP:502

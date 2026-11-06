@@ -1,0 +1,5 @@
+### mock_email_messages
+{"id":"MOCK-MAIL-MW49XVDA-239","action_id":"ACT-2C4BC3FC1A56","recipient_emails":"[\"budi.santoso@demo.example.invalid\"]","subject":"Ringkasan Koordinasi Tugas"}
+### mock_tasks
+{"id":"MOCK-TASK-MW49XVFP-31","action_id":"ACT-19A0501D3A46","assignee_id":"USR-103","title":"Finalisasi checklist operasional","due_at":"2026-11-10T09:00:00.000Z"}
+### mock_calendar_events

@@ -1,0 +1,26 @@
+{
+  "name": "navi",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NAVI - Verified-Action Office Agent (Tencent Cloud Hackathon Indonesia 2026, Track B)",
+  "type": "module",
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace apps/api",
+    "build": "npm run build --workspace apps/web",
+    "build:vercel": "node scripts/build-vercel.mjs",
+    "start": "npm run start --workspace apps/api",
+    "typecheck": "npm run typecheck --workspace apps/api && npm run typecheck --workspace apps/web",
+    "test": "npm run test --workspace apps/api",
+    "test:e2e": "npm run test:e2e --workspace apps/api"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "devDependencies": {
+    "@vercel/node": "^30.0.0"
+  }
+}

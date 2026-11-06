@@ -1,0 +1,35 @@
+{
+  "NOTICE": "DATA SINTETIS UNTUK HACKATHON. BUKAN DATA PERUSAHAAN/PENDUDUK NYATA.",
+  "org_id": "demo-navi-001",
+  "name": "Organisasi Demo NAVI (Fiktif)",
+  "default_timezone": "Asia/Jakarta",
+  "sites": [
+    {
+      "id": "JKT",
+      "city": "Jakarta",
+      "tz": "Asia/Jakarta"
+    },
+    {
+      "id": "MKS",
+      "city": "Makassar",
+      "tz": "Asia/Makassar"
+    },
+    {
+      "id": "JYP",
+      "city": "Jayapura",
+      "tz": "Asia/Jayapura"
+    }
+  ],
+  "workdays": [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday"
+  ],
+  "work_hours_local": {
+    "start": "09:00",
+    "end": "17:00"
+  },
+  "date_context": "Gunakan tanggal ISO dan offset zona waktu; referensi demo adalah November 2026. Jangan menafsirkan tanggal relatif tanpa date_context."
+}

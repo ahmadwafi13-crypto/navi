@@ -1,0 +1,4 @@
+### network / mail / connector calls in apps/
+apps/web/src/lib/api.ts:48:  const response = await fetch(`${API_BASE}${path}`, { ...init, headers });
+
+### only localhost references:

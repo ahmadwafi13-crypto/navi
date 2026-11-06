@@ -1,0 +1,8 @@
+IDENTITAS TEROTENTIKASI: Maya Putri (USR-001), Asia/Jakarta.
+WAKTU ACUAN DEMO: Jumat, 6 November 2026 pukul 10.00 WIB.
+
+PERMINTAAN:
+"Kirim notulen MTG-02 yang sudah disahkan ke Budi Santoso (USR-101) dengan subjek Ringkasan Koordinasi Tugas. Isi: Halo Budi, terlampir notulen yang sudah disahkan, mohon ditinjau. Lalu buat tugas untuk Sari Lestari (USR-103) berjudul Finalisasi checklist operasional, tenggat Selasa 10 November 2026 pukul 16.00 WIB."
+
+EXPECTED: 2 tindakan dengan detail lengkap; tidak ada klarifikasi tidak perlu; exact preview; status AWAITING_APPROVAL. Setelah manusia autentik menyetujui masing-masing action, mock email dan mock task menulis record ke database dan audit event; tidak ada email nyata.
+CATATAN: File notulen yang benar-benar akan dilampirkan harus tersedia dalam fixture. Jika tidak ada, agent harus mengangkat kekurangan lampiran, BUKAN menyatakan telah mengirim lampiran. Implementasi boleh memakai referensi dokumen sintetis MTG-02 sebagai attachment mock setelah membuat content fixture.

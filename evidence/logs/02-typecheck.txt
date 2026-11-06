@@ -1,0 +1,4 @@
+### apps/api
+apps/api typecheck: PASS (0 errors)
+### apps/web
+apps/web typecheck: PASS (0 errors)

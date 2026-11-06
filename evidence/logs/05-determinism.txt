@@ -1,0 +1,6 @@
+--- run 1 ---
+PASS: 26 / FAIL: 0 / TOTAL: 26
+--- run 2 ---
+PASS: 26 / FAIL: 0 / TOTAL: 26
+--- run 3 ---
+PASS: 26 / FAIL: 0 / TOTAL: 26

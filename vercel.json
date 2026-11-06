@@ -1,0 +1,22 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "buildCommand": "node scripts/build-vercel.mjs",
+  "outputDirectory": "apps/web/dist",
+  "framework": null,
+  "rewrites": [
+    { "source": "/v1/:path*", "destination": "/api/v1/:path*" },
+    { "source": "/internal/:path*", "destination": "/api/internal/:path*" },
+    { "source": "/((?!api|v1|internal|assets).*)", "destination": "/index.html" }
+  ],
+  "functions": {
+    "api/[[...path]].ts": {
+      "maxDuration": 30,
+      "memory": 1024
+    }
+  },
+  "env": {
+    "NAVI_DB_MODE": "memory",
+    "NAVI_REFERENCE_NOW": "2026-11-06T10:00:00+07:00"
+  }
+}

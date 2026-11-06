@@ -1,0 +1,82 @@
+### health
+{"ok":true,"service":"navi-api","version":"0.1.0","execution_mode":"MOCK_ONLY","workspace_root":"D:\\navi\\NAVI"}
+
+### login (Maya Putri, USR-001)
+{"session_id":"SES-9E1163981375","user":{"id":"USR-001","name":"Maya Putri","role":"koordinator","site":"JKT","email":"maya@demo.example.invalid","can_approve":["email.create","calendar.create","task.create"],"can_approve_high_risk":false},"api_key":"navi_873060e162cf4c212a1f1d74a49089cc29c243cac485fa9d","expires_at":"2026-11-06T11:04:54.874Z","notice":"Kunci API sesi demo. Semua keputusan humans hanya sah melalui sesi ini."}
+
+
+### HAPPY PATH: create run
+run_id: RUN-863D4B518C51
+step: AWAITING_APPROVAL
+  ACT-8B4E2C1C9ECB email.create AWAITING_APPROVAL v1 ab2c7622036a044c
+  ACT-93193DB60A32 task.create AWAITING_APPROVAL v1 d9e606d86bedb1ba
+
+### EXACT PREVIEW (email)
+state: AWAITING_APPROVAL | version: 1
+payload_hash: ab2c7622036a044cdb3345dbe7e1d01879038755b8c2c805e704608aa3919b65
+exact fields: action_type, recipient_ids, recipient_emails, subject_or_title, full_body_or_description, start_at, end_at, timezone, attachments, location
+payload:
+{
+  "action_type": "email.create",
+  "recipient_ids": [
+    "USR-101"
+  ],
+  "recipient_emails": [
+    "budi.santoso@demo.example.invalid"
+  ],
+  "subject_or_title": "Ringkasan Koordinasi Tugas",
+  "full_body_or_description": "Halo Budi, terlampir notulen yang sudah disahkan, mohon ditinjau",
+  "start_at": null,
+  "end_at": null,
+  "timezone": null,
+  "attachments": [
+    {
+      "document_id": "DOC-02",
+      "filename": "DOC-02.md",
+      "mime_type": "text/markdown",
+      "bytes": 23,
+      "content_sha256": "3b7becba790fb573cb2188235617a40b7a157d30810558c41e0e53947175553e",
+      "mock_uri": "mock://documents/DOC-02"
+    }
+  ],
+  "location": null,
+  "due_at": null,
+  "due_timezone": null,
+  "start_date": null,
+  "start_time": null,
+  "due_date": null,
+  "due_time": null,
+  "organizer_id": null,
+  "participant_sites": [],
+  "participant_local_times": [],
+  "meeting_ref": "MTG-02",
+  "document_status": "APPROVED"
+}
+
+### APPROVE (human decision, authenticated session)
+{"approval_id":"APR-61AAC7BDE4FF","action_id":"ACT-8B4E2C1C9ECB","approver_id":"USR-001","decision":"APPROVED","version":1,"payload_hash":"ab2c7622036a044cdb3345dbe7e1d01879038755b8c2c805e704608aa3919b65","issued_at":"2026-11-06T03:04:56.204Z","expires_at":"2026-11-06T03:19:56.204Z","risk_level":"LOW","notice":"Disetujui. Eksekusi belum terjadi - harus dipanggil melalui gateway dengan idempotency key."}
+
+{"approval_id":"APR-556F0901275E","action_id":"ACT-93193DB60A32","approver_id":"USR-001","decision":"APPROVED","version":1,"payload_hash":"d9e606d86bedb1ba99f98be7d567db99ae93da778bada70bcd221c14aac030b2","issued_at":"2026-11-06T03:04:56.281Z","expires_at":"2026-11-06T03:19:56.281Z","risk_level":"LOW","notice":"Disetujui. Eksekusi belum terjadi - harus dipanggil melalui gateway dengan idempotency key."}
+
+### EXECUTE via gateway (email)
+{"execution_id":"EXE-63CCC7647631","action_id":"ACT-2C4BC3FC1A56","status":"SUCCEEDED","receipt":{"receipt_id":"RCPT-MOCK-EMAIL-MW49XVDD","tool":"mock.email","provider":"NAVI_MOCK","simulated":true,"created_at":"2026-11-06T01:06:46.417Z","details":{"mock_message_id":"MOCK-MAIL-MW49XVDA-239","subject":"Ringkasan Koordinasi Tugas","recipient_emails":["budi.santoso@demo.example.invalid"],"attachment_count":1,"note":"Simulasi. Tidak ada email sungguhan yang dikirim."}},"provider_error":null,"idempotent_replay":true,"notice":"Simulasi. Tidak ada email/undangan/task sungguhan yang dikirim."}
+
+### EXECUTE via gateway (task)
+{"execution_id":"EXE-B07C5C2803BA","action_id":"ACT-19A0501D3A46","status":"SUCCEEDED","receipt":{"receipt_id":"RCPT-MOCK-TASK-MW49XVFS","tool":"mock.task","provider":"NAVI_MOCK","simulated":true,"created_at":"2026-11-06T01:06:46.504Z","details":{"mock_task_id":"MOCK-TASK-MW49XVFP-31","title":"Finalisasi checklist operasional","assignee_id":"USR-103","due_at":"2026-11-10T09:00:00.000Z","note":"Simulasi. Tidak ada sistem tugas sungguhan yang diubah."}},"provider_error":null,"idempotent_replay":true,"notice":"Simulasi. Tidak ada email/undangan/task sungguhan yang dikirim."}
+
+### IDEMPOTENCY REPLAY (same key again)
+{"execution_id":"EXE-63CCC7647631","action_id":"ACT-2C4BC3FC1A56","status":"SUCCEEDED","receipt":{"receipt_id":"RCPT-MOCK-EMAIL-MW49XVDD","tool":"mock.email","provider":"NAVI_MOCK","simulated":true,"created_at":"2026-11-06T01:06:46.417Z","details":{"mock_message_id":"MOCK-MAIL-MW49XVDA-239","subject":"Ringkasan Koordinasi Tugas","recipient_emails":["budi.santoso@demo.example.invalid"],"attachment_count":1,"note":"Simulasi. Tidak ada email sungguhan yang dikirim."}},"provider_error":null,"idempotent_replay":true,"notice":"Simulasi. Tidak ada email/undangan/task sungguhan yang dikirim."}
+
+### REFUSAL: execute a NEW action that was never approved
+HTTP_STATUS=403
+
+### AUDIT TRAIL
+#29 INPUT_RECEIVED             USR-001   - -> -
+#30 ACTIONS_PARSED             system    - -> -
+#31 VALIDATED                  system    - -> -
+#32 PLAN_PREVIEWED             USR-001   - -> -
+#33 APPROVED                   USR-001   AWAITING_APPROVAL -> APPROVED
+#34 APPROVED                   USR-001   AWAITING_APPROVAL -> APPROVED
+
+### AUDIT HASH CHAIN VERIFY
+{"ok":true,"brokenAt":null}

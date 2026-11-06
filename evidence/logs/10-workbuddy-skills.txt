@@ -1,0 +1,45 @@
+### user-level installed skills:
+navi-conflict-detector
+navi-interpreter
+navi-orchestrator
+navi-validator
+
+### project-level skills:
+navi-conflict-detector
+navi-interpreter
+navi-orchestrator
+navi-validator
+
+### each skill frontmatter:
+--- .workbuddy-ai/skills/navi-conflict-detector/SKILL.md
+---
+name: navi-conflict-detector
+description: NAVI Agent A3 - Conflict Detector. Menemukan instruksi bertentangan, penerima ambigu, status dokumen DRAFT, waktu tidak pasti, kewenangan tidak terverifikasi, dan prompt injection. Gunakan saat perlu menentukan konflik mana yang Requires clarification dan pertanyaan singkat apa yang harus diajukan ke pengguna.
+version: 1.0.0
+allowed-tools: Read, Grep, Glob
+---
+
+--- .workbuddy-ai/skills/navi-interpreter/SKILL.md
+---
+name: navi-interpreter
+description: NAVI Agent A2 - Interpreter. Mengubah teks chat/catatan rapat (bahasa Indonesia) menjadi kandidat aksi email/calendar/task yang terstruktur, lengkap dengan siapa/apa/kapan/di mana/konten/provenance. Gunakan saat perlu memecah satu pesan menjadi beberapa tindakan dengan asal instruksi yang jelas.
+version: 1.0.0
+allowed-tools: Read, Grep, Glob
+---
+
+--- .workbuddy-ai/skills/navi-orchestrator/SKILL.md
+---
+name: navi-orchestrator
+description: NAVI Agent A1 - Orchestrator. Menentukan langkah berikutnya dalam alur NAVI (interpret -> detect -> validate -> clarify/preview) dari sebuah RunInput. Gunakan saat perlu menentukan status run, apakah perlu klarifikasi, atau langkah berikutnya apa yang harus dijalankan. Tidak memiliki akses tool eksekusi apa pun.
+version: 1.0.0
+allowed-tools: Read, Grep, Glob
+---
+
+--- .workbuddy-ai/skills/navi-validator/SKILL.md
+---
+name: navi-validator
+description: NAVI Agent A4 - Validator. Memvalidasi rencana aksi terhadap aturan operasional Indonesia (WIB/WITA/WIT, jam kerja, blok salat Jumat, hari libur organisasi/nasional), Composite terhadap instruksi asli, dan mendeteksi prompt injection. Gunakan saat perlu menentukan apakah sebuah aksi boleh masuk tahap persetujuan.
+version: 1.0.0
+allowed-tools: Read, Grep, Glob
+---
+

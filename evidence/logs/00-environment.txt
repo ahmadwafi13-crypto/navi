@@ -1,0 +1,6 @@
+workspace_root: /d/navi/NAVI
+node: v22.22.2
+npm: 10.9.7
+python: Python 3.13.14
+git: git version 2.55.0.windows.3
+date_utc: 2026-11-06T03:04:00Z

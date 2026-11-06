@@ -1,0 +1,14 @@
+node_modules/
+data/navi-runtime.sqlite*
+apps/web/dist/
+.workbuddy-ai/
+evidence/video/navi-demo.webm
+*.log
+.DS_Store
+Thumbs.db
+.vercel-output/
+.vercel/
+tmp/
+navi-submission.zip
+navi-submission2
+navi-submission/
